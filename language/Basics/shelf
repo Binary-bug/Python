@@ -1,0 +1,28 @@
+import shelve
+
+with shelve.open('ShelfTest') as fruit:
+    fruit['orange'] = "a sweet. orange, citrus fruit"
+    fruit['apple'] =  "good for making cider"
+    fruit['lemon'] = "a sour, yellow citrus fruit"
+    fruit['grape'] = "a small, sweet fruit growing in bunches"
+    fruit['lime'] = "a sour, green fruit"
+
+    print(fruit["lemon"])
+    print(fruit["grape"])
+
+
+
+############# alternatively #####################
+
+fruit2 = shelve.open('ShelfTest2')
+fruit2['orange'] = "a sweet. orange, citrus fruit"
+fruit2['apple'] =  "good for making cider"
+fruit2['lemon'] = "a sour, yellow citrus fruit"
+fruit2['grape'] = "a small, sweet fruit growing in bunches"
+fruit2['lime'] = "a sour, green fruit"
+
+print(fruit2['orange'])
+print(fruit2['grape'])
+fruit2.close()
+
+print(fruit2)
