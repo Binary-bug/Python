@@ -1,0 +1,9 @@
+Classification Error over test sample for K=90 coefficients is 3.75
+Classification Error over test sample for K=140 coefficients is 3.75
+Classification Error over test sample for K=175 coefficients is 5.0
+Classification Error over test sample for K=202 coefficients is 5.0
+Classification Error over test sample for K=223 coefficients is 5.0
+Classification Error over test sample for K=240 coefficients is 5.0
+Classification Error over test sample for K=253 coefficients is 5.0
+Classification Error over test sample for K=264 coefficients is 5.0
+Classification Error over test sample for K=272 coefficients is 5.0

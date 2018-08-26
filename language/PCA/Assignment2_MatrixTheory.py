@@ -6,7 +6,7 @@ from pylab import *
 from natsort import natsorted, ns
 import re
 from sklearn.neighbors import NearestNeighbors as nn
-
+import sys
 
 
 def natural_sort( l ):
@@ -74,67 +74,79 @@ m,n = im.shape
 Eigen_faces,Eigen_values,Empirical_mean = pca(raw_matrix)
 
 
-#Step 2.5: Choosing the value of K
-Eigen_total = np.sum(Eigen_values)
-K = np.argmin(Eigen_values.cumsum() < (0.95 * Eigen_total))
+orig_stdout = sys.stdout
+f = open('ClassificationError.txt','w')
+sys.stdout = f
+
+
+iterations = np.arange(1,10)
+
+for threshold in iterations:
+
+    threshold /= 50
+    #Step 2.5: Choosing the value of K
+    Eigen_total = np.sum(Eigen_values)
+    K = np.argmin(Eigen_values.cumsum() < (threshold * Eigen_total))
 
 
 
-#Step 3: Take some random image from the training set and compute K coefficients
-random_train_image = np.array(Image.open(traindata_path+train_list[np.random.randint(0,len(train_list))])).flatten()
-coeff_train = np.dot(random_train_image,np.transpose(Eigen_faces[:K]))
+    #Step 3: Take some random image from the training set and compute K coefficients
+    random_train_image = np.array(Image.open(traindata_path+train_list[np.random.randint(0,len(train_list))])).flatten()
+    coeff_train = np.dot(random_train_image,np.transpose(Eigen_faces[:K]))
 
 
-#Step 4: Reconstruction of the sample image and original
-reconstructed_train_image = np.dot(coeff_train,Eigen_faces[:K]) + Empirical_mean
+    #Step 4: Reconstruction of the sample image and original
+    reconstructed_train_image = np.dot(coeff_train,Eigen_faces[:K]) + Empirical_mean
 
-figure(1)
-gray()
-subplot(2,4,1)
-imshow(random_train_image.reshape(m,n))
-subplot(2,4,2)
-imshow(reconstructed_train_image.reshape(m,n))
+    figure(1)
+    gray()
+    subplot(2,4,1)
+    imshow(random_train_image.reshape(m,n))
+    subplot(2,4,2)
+    imshow(reconstructed_train_image.reshape(m,n))
 
-savefig("Reconstruct_TrainImage_K_{}.png".format(K), format='png', dpi=300)
+    savefig("Reconstruct_TrainImage_K_{}.png".format(K), format='png', dpi=300)
 
-#Step5: Classification of test samples in the eigen space
-classification_count = 0
+    #Step5: Classification of test samples in the eigen space
+    classification_count = 0
 
-#construction of K-coefficients of each image in the training set
-Kcoeff_train = []
-for i in raw_matrix:
-    Kcoeff_train.append(np.dot(i,np.transpose(Eigen_faces[:K])))
+    #construction of K-coefficients of each image in the training set
+    Kcoeff_train = []
+    for i in raw_matrix:
+        Kcoeff_train.append(np.dot(i,np.transpose(Eigen_faces[:K])))
 
-Kcoeff_test = []
-for i in test_matrix:
-    Kcoeff_test.append(np.dot(i, np.transpose(Eigen_faces[:K])))
+    Kcoeff_test = []
+    for i in test_matrix:
+        Kcoeff_test.append(np.dot(i, np.transpose(Eigen_faces[:K])))
 
-Kcoeff_test = array(Kcoeff_test)
-Kcoeff_train = array(Kcoeff_train)
+    Kcoeff_test = array(Kcoeff_test)
+    Kcoeff_train = array(Kcoeff_train)
 
-for i in range(Kcoeff_test.shape[0]):
-    neigh = nn(n_neighbors=1)
-    neigh.fit(Kcoeff_train)
-    classification_index = neigh.kneighbors(Kcoeff_test[i].reshape(1,-1))[1]
-    if classification_index // 8 == i // 2:
-        classification_count += 1
+    for i in range(Kcoeff_test.shape[0]):
+        neigh = nn(n_neighbors=1)
+        neigh.fit(Kcoeff_train)
+        classification_index = neigh.kneighbors(Kcoeff_test[i].reshape(1,-1))[1]
+        if classification_index // 8 == i // 2:
+            classification_count += 1
 
-percentage_of_error = (Kcoeff_test.shape[0] - classification_count) / classification_count
-print("Classification Error over test sample is {}".format(100*percentage_of_error))
+    percentage_of_error = (Kcoeff_test.shape[0] - classification_count) / Kcoeff_test.shape[0]
+    print("Classification Error over test sample for K={} coefficients is {}".format(K,100*percentage_of_error))
 
 
-#Step7: Take some random image from test set and comput K coefficients
-random_test_image = np.array(Image.open(testdata_path+test_list[np.random.randint(0,len(test_list))])).flatten()
-coeff_test = np.dot(random_test_image,np.transpose(Eigen_faces[:K]))
+    #Step7: Take some random image from test set and comput K coefficients
+    random_test_image = np.array(Image.open(testdata_path+test_list[np.random.randint(0,len(test_list))])).flatten()
+    coeff_test = np.dot(random_test_image,np.transpose(Eigen_faces[:K]))
 
-#Step 7.5: Reconstruction of the sample image and original
-reconstructed_test_image = np.dot(coeff_test,Eigen_faces[:K]) + Empirical_mean
+    #Step 7.5: Reconstruction of the sample image and original
+    reconstructed_test_image = np.dot(coeff_test,Eigen_faces[:K]) + Empirical_mean
 
-figure(2)
-gray()
-subplot(2,4,1)
-imshow(random_test_image.reshape(m,n))
-subplot(2,4,2)
-imshow(reconstructed_test_image.reshape(m,n))
-savefig("Reconstruct_TestImage_K_{}.png".format(K), format='png', dpi=300)
+    figure(2)
+    gray()
+    subplot(2,4,1)
+    imshow(random_test_image.reshape(m,n))
+    subplot(2,4,2)
+    imshow(reconstructed_test_image.reshape(m,n))
+    savefig("Reconstruct_TestImage_K_{}.png".format(K), format='png', dpi=300)
 
+sys.stdout = orig_stdout
+f.close()
